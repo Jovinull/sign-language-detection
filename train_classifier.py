@@ -3,11 +3,13 @@ import numpy as np
 import cv2
 import tensorflow as tf
 from keras import layers, models
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.utils import shuffle
 
 # Carregando e processando os dados
 DATA_DIR = './data'
 IMG_SIZE = 128  # Tamanho das imagens
+N_SPLITS = 5  # Número de divisões para a validação cruzada
 
 def load_data():
     data = []
@@ -30,30 +32,53 @@ def load_data():
 
 data, labels = load_data()
 
-# Dividindo os dados em conjunto de treino e teste
-x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, shuffle=True, stratify=labels)
+# Misturar os dados antes da validação cruzada
+data, labels = shuffle(data, labels, random_state=42)
+
+# Definir o KFold para validação cruzada
+kf = KFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
 
 # Criando o modelo CNN do zero
-model = models.Sequential([
-    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3)),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(64, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
+def create_model():
+    model = models.Sequential([
+        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3)),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(128, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(128, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+
+        layers.Flatten(),
+        layers.Dense(512, activation='relu'),
+        layers.Dense(21, activation='softmax')  # Ajustar o número de classes
+    ])
     
-    layers.Flatten(),
-    layers.Dense(512, activation='relu'),
-    layers.Dense(21, activation='softmax')  # Ajustar o número de classes
-])
+    # Compilar o modelo
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
+    return model
 
-# Compilando o modelo
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+# Executar validação cruzada
+fold_no = 1
+for train_index, test_index in kf.split(data):
+    x_train, x_test = data[train_index], data[test_index]
+    y_train, y_test = labels[train_index], labels[test_index]
 
-# Treinando o modelo
-history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+    # Criar um novo modelo para cada iteração
+    model = create_model()
 
-# Salvando o modelo treinado
-model.save('hand_gesture_cnn.h5')
+    print(f'Treinando a fold {fold_no}...')
+
+    # Treinar o modelo
+    history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+    
+    # Avaliar a acurácia no conjunto de teste
+    scores = model.evaluate(x_test, y_test, verbose=0)
+    print(f'Acurácia da fold {fold_no}: {scores[1] * 100}%')
+    
+    fold_no += 1
+
+# Salvando o último modelo treinado
+model.save('hand_gesture_cnn_kfold.h5')
