@@ -139,9 +139,11 @@ celerybeat.pid
 .env
 .venv
 .sinais
+.results
 env/
 venv/
 sinais/
+results/
 ENV/
 env.bak/
 venv.bak/
