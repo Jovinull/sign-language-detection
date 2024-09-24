@@ -9,7 +9,7 @@ from sklearn.utils import shuffle
 # Carregando e processando os dados
 DATA_DIR = './data'
 IMG_SIZE = 128  # Tamanho das imagens
-N_SPLITS = 5  # Número de divisões para a validação cruzada
+N_SPLITS = 10  # Número de divisões para a validação cruzada
 
 def load_data():
     data = []
@@ -41,18 +41,19 @@ kf = KFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
 # Criando o modelo CNN do zero
 def create_model():
     model = models.Sequential([
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3)),
+        layers.Conv2D(16, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3)),  # Filtros reduzidos para 16
         layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3), activation='relu'),
+        
+        layers.Conv2D(32, (3, 3), activation='relu'),  # Filtros reduzidos para 32
         layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(128, (3, 3), activation='relu'),
+        
+        layers.Conv2D(64, (3, 3), activation='relu'),  # Redução para 64 na última convolucional
         layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(128, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
-
+        
         layers.Flatten(),
-        layers.Dense(512, activation='relu'),
-        layers.Dense(21, activation='softmax')  # Ajustar o número de classes
+        layers.Dense(128, activation='relu'),  # Redução para 128 neurônios
+        layers.Dropout(0.5),  # Adicionado dropout para evitar overfitting
+        layers.Dense(21, activation='softmax')
     ])
     
     # Compilar o modelo
@@ -72,7 +73,7 @@ for train_index, test_index in kf.split(data):
     print(f'Treinando a fold {fold_no}...')
 
     # Treinar o modelo
-    history = model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+    history = model.fit(x_train, y_train, epochs=25, validation_data=(x_test, y_test))
     
     # Avaliar a acurácia no conjunto de teste
     scores = model.evaluate(x_test, y_test, verbose=0)

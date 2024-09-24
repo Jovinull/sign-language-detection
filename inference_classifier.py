@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 # Carregar o modelo treinado
-model = tf.keras.models.load_model('hand_gesture_cnn.h5')
+model = tf.keras.models.load_model('hand_gesture_cnn_kfold.h5')
 
 # Dicionário de mapeamento de labels (Ajuste de acordo com o número de classes)
 labels_dict = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'I', 8: 'L', 9: 'M', 
