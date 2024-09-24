@@ -51,28 +51,13 @@ while True:
 
             # Recortar a região da mão
             hand_roi = frame[y_min:y_max, x_min:x_max]
-            hand_h, hand_w, _ = hand_roi.shape
 
             if hand_roi.size > 0:
-                # Redimensiona a imagem da mão mantendo a proporção
-                if hand_h > hand_w:
-                    scale = IMG_SIZE / hand_h
-                else:
-                    scale = IMG_SIZE / hand_w
-                
-                new_w = int(hand_w * scale)
-                new_h = int(hand_h * scale)
-                
-                hand_resized = cv2.resize(hand_roi, (new_w, new_h))
-                
-                # Centralizar a imagem da mão em uma nova imagem 512x512
-                final_hand = np.zeros((IMG_SIZE, IMG_SIZE, 3), dtype=np.uint8)
-                y_offset = (IMG_SIZE - new_h) // 2
-                x_offset = (IMG_SIZE - new_w) // 2
-                final_hand[y_offset:y_offset + new_h, x_offset:x_offset + new_w] = hand_resized
+                # Redimensiona a imagem da mão diretamente para 512x512
+                hand_resized = cv2.resize(hand_roi, (IMG_SIZE, IMG_SIZE))
 
                 # Normaliza a imagem
-                normalized_hand = np.array(final_hand, dtype="float32") / 255.0
+                normalized_hand = np.array(hand_resized, dtype="float32") / 255.0
                 normalized_hand = np.expand_dims(normalized_hand, axis=0)
 
                 # Faz a predição
