@@ -5,6 +5,7 @@ import tensorflow as tf
 from keras import layers, models
 from sklearn.model_selection import KFold
 from sklearn.utils import shuffle
+from keras import regularizers
 
 # Carregando e processando os dados
 DATA_DIR = './data'
@@ -41,18 +42,22 @@ kf = KFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
 # Criando o modelo CNN do zero
 def create_model():
     model = models.Sequential([
-        layers.Conv2D(16, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3)),  # Filtros reduzidos para 16
+        layers.Conv2D(16, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3), 
+                      kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
         layers.MaxPooling2D((2, 2)),
         
-        layers.Conv2D(32, (3, 3), activation='relu'),  # Filtros reduzidos para 32
+        layers.Conv2D(32, (3, 3), activation='relu', 
+                      kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
         layers.MaxPooling2D((2, 2)),
         
-        layers.Conv2D(64, (3, 3), activation='relu'),  # Redução para 64 na última convolucional
+        layers.Conv2D(64, (3, 3), activation='relu', 
+                      kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
         layers.MaxPooling2D((2, 2)),
         
         layers.Flatten(),
-        layers.Dense(128, activation='relu'),  # Redução para 128 neurônios
-        layers.Dropout(0.5),  # Adicionado dropout para evitar overfitting
+        layers.Dense(128, activation='relu', 
+                     kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
+        layers.Dropout(0.5),  # Dropout para evitar overfitting
         layers.Dense(21, activation='softmax')
     ])
     

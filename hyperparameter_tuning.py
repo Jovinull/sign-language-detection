@@ -6,6 +6,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.utils import shuffle
 from scikeras.wrappers import KerasClassifier
 import config  # Importar os parâmetros do arquivo config.py
+from keras import regularizers
 
 # Carregando e processando os dados
 DATA_DIR = config.DATA_DIR
@@ -35,17 +36,20 @@ data, labels = shuffle(data, labels, random_state=42)
 
 def create_model(conv_layers=config.conv_layers, filters=config.filters, kernel_size=config.kernel_size,
                  dense_units=config.dense_units, dropout_rate=config.dropout_rate,
-                 activation=config.activation, optimizer=config.optimizer):
+                 activation=config.activation, optimizer=config.optimizer,
+                 l2_reg=config.l2_reg):  # Novo parâmetro l2_reg
     
     model = models.Sequential()
     model.add(layers.Input(shape=(IMG_SIZE, IMG_SIZE, 3)))
     
     for i in range(conv_layers):
-        model.add(layers.Conv2D(filters, (kernel_size, kernel_size), activation=activation))
+        model.add(layers.Conv2D(filters, (kernel_size, kernel_size), activation=activation,
+                                kernel_regularizer=regularizers.l2(l2_reg)))  # Aplicando L2
         model.add(layers.MaxPooling2D((2, 2)))
     
     model.add(layers.Flatten())
-    model.add(layers.Dense(dense_units, activation=activation))
+    model.add(layers.Dense(dense_units, activation=activation,
+                           kernel_regularizer=regularizers.l2(l2_reg)))  # Aplicando L2
     model.add(layers.Dropout(dropout_rate))
     model.add(layers.Dense(21, activation='softmax'))
 

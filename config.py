@@ -10,6 +10,7 @@ dense_units = 512
 dropout_rate = 0.5
 activation = 'relu'
 optimizer = 'adam'
+l2_reg = 0.001
 epochs = 10
 batch_size = 32
 
@@ -22,6 +23,7 @@ param_grid = {
     "dropout_rate": [0.3, 0.5],
     "activation": ['relu', 'tanh'],
     "optimizer": ['adam', 'sgd'],
+    "l2_reg": [0.001, 0.01],
     "epochs": [50],
     "batch_size": [32, 64]
 }
