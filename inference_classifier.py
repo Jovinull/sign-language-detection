@@ -9,7 +9,7 @@ hands = mp_hands.Hands(max_num_hands=1)  # Detecção de apenas 1 mão
 mp_drawing = mp.solutions.drawing_utils
 
 # Carregar o modelo treinado
-model = tf.keras.models.load_model('hand_gesture_cnn_kfold.h5')
+model = tf.keras.models.load_model('results/hand_gesture_cnn_kfold.h5')
 
 # Dicionário de mapeamento de labels
 labels_dict = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'I', 8: 'L', 9: 'M', 
@@ -18,7 +18,7 @@ labels_dict = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'I', 8
 
 cap = cv2.VideoCapture(0)
 
-IMG_SIZE = 256  # Mesmo tamanho usado no treinamento
+IMG_SIZE = 512  # Mesmo tamanho usado no treinamento
 
 while True:
     ret, frame = cap.read()
@@ -43,7 +43,7 @@ while True:
                 x_max, y_max = max(x_max, x), max(y_max, y)
 
             # Expande ligeiramente a região da mão detectada
-            padding = 30
+            padding = 10  # Reduzido para garantir menos interferência de padding
             x_min = max(0, x_min - padding)
             y_min = max(0, y_min - padding)
             x_max = min(w, x_max + padding)
@@ -51,11 +51,28 @@ while True:
 
             # Recortar a região da mão
             hand_roi = frame[y_min:y_max, x_min:x_max]
+            hand_h, hand_w, _ = hand_roi.shape
 
             if hand_roi.size > 0:
-                # Redimensiona e normaliza a região da mão
-                resized_hand = cv2.resize(hand_roi, (IMG_SIZE, IMG_SIZE))
-                normalized_hand = np.array(resized_hand, dtype="float32") / 255.0
+                # Redimensiona a imagem da mão mantendo a proporção
+                if hand_h > hand_w:
+                    scale = IMG_SIZE / hand_h
+                else:
+                    scale = IMG_SIZE / hand_w
+                
+                new_w = int(hand_w * scale)
+                new_h = int(hand_h * scale)
+                
+                hand_resized = cv2.resize(hand_roi, (new_w, new_h))
+                
+                # Centralizar a imagem da mão em uma nova imagem 512x512
+                final_hand = np.zeros((IMG_SIZE, IMG_SIZE, 3), dtype=np.uint8)
+                y_offset = (IMG_SIZE - new_h) // 2
+                x_offset = (IMG_SIZE - new_w) // 2
+                final_hand[y_offset:y_offset + new_h, x_offset:x_offset + new_w] = hand_resized
+
+                # Normaliza a imagem
+                normalized_hand = np.array(final_hand, dtype="float32") / 255.0
                 normalized_hand = np.expand_dims(normalized_hand, axis=0)
 
                 # Faz a predição

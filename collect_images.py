@@ -7,7 +7,7 @@ from image_capture_utils.hand_detection import process_frame
 DATA_DIR = './data'
 number_of_classes = 21
 dataset_size = 50
-IMG_SIZE = 256
+IMG_SIZE = 512
 
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)

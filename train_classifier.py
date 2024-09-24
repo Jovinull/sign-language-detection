@@ -9,7 +9,7 @@ from keras import regularizers
 
 # Carregando e processando os dados
 DATA_DIR = './data'
-IMG_SIZE = 256  # Tamanho das imagens
+IMG_SIZE = 512  # Tamanho das imagens
 N_SPLITS = 10  # Número de divisões para a validação cruzada
 
 def load_data():

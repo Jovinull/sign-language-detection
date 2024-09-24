@@ -1,6 +1,6 @@
 # Parâmetros de dados
 DATA_DIR = './data'
-IMG_SIZE = 256
+IMG_SIZE = 512
 
 # Parâmetros do modelo
 conv_layers = 3

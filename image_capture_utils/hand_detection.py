@@ -18,7 +18,8 @@ def process_frame(frame, IMG_SIZE):
             x_max = int(max([lm.x for lm in hand_landmarks.landmark]) * w)
             y_max = int(max([lm.y for lm in hand_landmarks.landmark]) * h)
 
-            padding = 30
+            # Adiciona um padding mínimo, mas remove as barras pretas grandes
+            padding = 10  # Mantemos um padding pequeno
             x_min = max(0, x_min - padding)
             y_min = max(0, y_min - padding)
             x_max = min(w, x_max + padding)
@@ -27,23 +28,29 @@ def process_frame(frame, IMG_SIZE):
             hand_crop = frame[y_min:y_max, x_min:x_max]
             hand_h, hand_w, _ = hand_crop.shape
 
-            if hand_h != hand_w:
-                max_dim = max(hand_h, hand_w)
-                square_hand = np.zeros((max_dim, max_dim, 3), dtype=np.uint8)
-                if hand_h > hand_w:
-                    offset = (hand_h - hand_w) // 2
-                    square_hand[:, offset:offset + hand_w] = hand_crop
-                else:
-                    offset = (hand_w - hand_h) // 2
-                    square_hand[offset:offset + hand_h, :] = hand_crop
-                hand_crop = square_hand
+            # Redimensionar para 512x512 sem distorcer a imagem
+            if hand_h > hand_w:
+                scale = IMG_SIZE / hand_h
+            else:
+                scale = IMG_SIZE / hand_w
 
-            hand_resized = cv2.resize(hand_crop, (IMG_SIZE, IMG_SIZE))
+            new_w = int(hand_w * scale)
+            new_h = int(hand_h * scale)
+
+            hand_resized = cv2.resize(hand_crop, (new_w, new_h))
+
+            # Centralizar a imagem redimensionada em um fundo 512x512
+            final_hand = np.zeros((IMG_SIZE, IMG_SIZE, 3), dtype=np.uint8)
+            y_offset = (IMG_SIZE - new_h) // 2
+            x_offset = (IMG_SIZE - new_w) // 2
+            final_hand[y_offset:y_offset + new_h, x_offset:x_offset + new_w] = hand_resized
+
+            # Desenha o retângulo na imagem original para visualização
             cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
 
-            return hand_resized, frame
+            return final_hand, frame
 
     else:
-        cv2.putText(frame, "Nenhuma mao detectada", (50, 50),
+        cv2.putText(frame, "Nenhuma mão detectada", (50, 50),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     return None, frame
