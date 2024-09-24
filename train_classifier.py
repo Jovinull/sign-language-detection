@@ -9,7 +9,7 @@ from keras import regularizers
 
 # Carregando e processando os dados
 DATA_DIR = './data'
-IMG_SIZE = 128  # Tamanho das imagens
+IMG_SIZE = 256  # Tamanho das imagens
 N_SPLITS = 10  # Número de divisões para a validação cruzada
 
 def load_data():
@@ -87,4 +87,4 @@ for train_index, test_index in kf.split(data):
     fold_no += 1
 
 # Salvando o último modelo treinado
-model.save('hand_gesture_cnn_kfold.h5')
+model.save('results/hand_gesture_cnn_kfold.h5')
