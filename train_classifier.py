@@ -1,90 +1,39 @@
-import os
-import numpy as np
-import cv2
 import tensorflow as tf
-from keras import layers, models
 from sklearn.model_selection import KFold
-from sklearn.utils import shuffle
-from keras import regularizers
+from train_utils.data_loader import load_data
+from train_utils.model_builder import create_model
+import config
 
-# Carregando e processando os dados
-DATA_DIR = './data'
-IMG_SIZE = 512  # Tamanho das imagens
-N_SPLITS = 10  # Número de divisões para a validação cruzada
+# Função para realizar o treinamento com validação cruzada
+def cross_validate_and_train(data, labels, n_splits, BATCH_SIZE, epochs):
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    fold_no = 1
 
-def load_data():
-    data = []
-    labels = []
-    
-    for class_dir in os.listdir(DATA_DIR):
-        class_path = os.path.join(DATA_DIR, class_dir)
-        label = int(class_dir)
-        
-        for img_path in os.listdir(class_path):
-            img = cv2.imread(os.path.join(class_path, img_path))
-            img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
-            data.append(img)
-            labels.append(label)
-    
-    data = np.array(data, dtype="float32") / 255.0  # Normalizando as imagens
-    labels = np.array(labels)
-    
-    return data, labels
+    for train_index, test_index in kf.split(data):
+        x_train, x_test = data[train_index], data[test_index]
+        y_train, y_test = labels[train_index], labels[test_index]
 
-data, labels = load_data()
+        model = create_model()
 
-# Misturar os dados antes da validação cruzada
-data, labels = shuffle(data, labels, random_state=42)
+        print(f'Treinando a fold {fold_no}...')
 
-# Definir o KFold para validação cruzada
-kf = KFold(n_splits=N_SPLITS, shuffle=True, random_state=42)
+        # Definir os datasets
+        train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+        test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-# Criando o modelo CNN do zero
-def create_model():
-    model = models.Sequential([
-        layers.Conv2D(16, (3, 3), activation='relu', input_shape=(IMG_SIZE, IMG_SIZE, 3), 
-                      kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
-        layers.MaxPooling2D((2, 2)),
-        
-        layers.Conv2D(32, (3, 3), activation='relu', 
-                      kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
-        layers.MaxPooling2D((2, 2)),
-        
-        layers.Conv2D(64, (3, 3), activation='relu', 
-                      kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
-        layers.MaxPooling2D((2, 2)),
-        
-        layers.Flatten(),
-        layers.Dense(128, activation='relu', 
-                     kernel_regularizer=regularizers.l2(0.001)),  # Regularização L2
-        layers.Dropout(0.5),  # Dropout para evitar overfitting
-        layers.Dense(21, activation='softmax')
-    ])
-    
-    # Compilar o modelo
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    
-    return model
+        # Treinar o modelo
+        history = model.fit(train_dataset, epochs=epochs, validation_data=test_dataset)
 
-# Executar validação cruzada
-fold_no = 1
-for train_index, test_index in kf.split(data):
-    x_train, x_test = data[train_index], data[test_index]
-    y_train, y_test = labels[train_index], labels[test_index]
+        # Avaliar a acurácia no conjunto de teste
+        scores = model.evaluate(test_dataset, verbose=0)
+        print(f'Acurácia da fold {fold_no}: {scores[1] * 100}%')
 
-    # Criar um novo modelo para cada iteração
-    model = create_model()
+        fold_no += 1
 
-    print(f'Treinando a fold {fold_no}...')
+    # Salvando o último modelo treinado
+    model.save('results/hand_gesture_cnn_kfold.h5')
 
-    # Treinar o modelo
-    history = model.fit(x_train, y_train, epochs=25, validation_data=(x_test, y_test))
-    
-    # Avaliar a acurácia no conjunto de teste
-    scores = model.evaluate(x_test, y_test, verbose=0)
-    print(f'Acurácia da fold {fold_no}: {scores[1] * 100}%')
-    
-    fold_no += 1
 
-# Salvando o último modelo treinado
-model.save('results/hand_gesture_cnn_kfold.h5')
+# Carregar dados e executar o treinamento diretamente ao rodar este arquivo
+data, labels = load_data()  # Agora retornando data e labels normalmente
+cross_validate_and_train(data, labels, config.N_SPLITS, config.BATCH_SIZE, config.epochs)

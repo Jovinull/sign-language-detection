@@ -1,20 +1,26 @@
 # Parâmetros de dados
 DATA_DIR = './data'
-IMG_SIZE = 512
+IMG_SIZE = 512  # Tamanho das imagens
+
+# Parâmetros de treino
+N_SPLITS = 10  # Número de divisões para a validação cruzada
+BATCH_SIZE = 35  # Tamanho do lote
+epochs = 10  # Número de épocas
+
+# BATCH_SIZE Possíveis candidatos
+# 35, 50, 70, 84, 100, 140
 
 # Parâmetros do modelo
 conv_layers = 3
-filters = 32
-kernel_size = 3
-dense_units = 512
-dropout_rate = 0.5
-activation = 'relu'
-optimizer = 'adam'
-l2_reg = 0.001
-epochs = 10
-batch_size = 32
+filters = [16, 32, 64]  # Filtros para cada camada convolucional
+kernel_size = 3  # Tamanho do kernel (filtro)
+dense_units = 128  # Número de unidades na camada densa
+dropout_rate = 0.3  # Taxa de dropout
+activation = 'relu'  # Função de ativação
+optimizer = 'adam'  # Otimizador
+l2_reg = 0.001  # Regularização L2
 
-# Parâmetros de busca
+# Parâmetros de tuning (busca de hiperparâmetros)
 param_grid = {
     "conv_layers": [2, 3],
     "filters": [32, 64, 128],
