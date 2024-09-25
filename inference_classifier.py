@@ -6,7 +6,6 @@ import mediapipe as mp
 # Inicializa o Mediapipe para detecção de mãos
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=1)  # Detecção de apenas 1 mão
-mp_drawing = mp.solutions.drawing_utils
 
 # Carregar o modelo treinado
 model = tf.keras.models.load_model('results/hand_gesture_cnn_kfold.h5')
@@ -70,9 +69,6 @@ while True:
 
             # Desenha um quadrado verde ao redor da mão detectada
             cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-
-            # Desenha as landmarks da mão (opcional)
-            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
     # Exibe o frame com a detecção e classificação
     cv2.imshow('Hand Gesture Classification', frame)

@@ -1,49 +1,42 @@
 import os
 import pickle
-import mediapipe as mp
 import cv2
-import matplotlib.pyplot as plt
-
-
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-
-hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
+import numpy as np
 
 DATA_DIR = './data'
+IMG_SIZE = 512  # O mesmo tamanho usado durante a captura
 
 data = []
 labels = []
+
+# Percorre cada diretório (classe) no DATA_DIR
 for dir_ in os.listdir(DATA_DIR):
-    for img_path in os.listdir(os.path.join(DATA_DIR, dir_)):
-        data_aux = []
+    class_dir = os.path.join(DATA_DIR, dir_)
+    
+    if os.path.isdir(class_dir):
+        # Para cada imagem dentro da classe
+        for img_name in os.listdir(class_dir):
+            img_path = os.path.join(class_dir, img_name)
+            img = cv2.imread(img_path)
 
-        x_ = []
-        y_ = []
+            if img is not None:
+                # Redimensiona a imagem para o tamanho correto (caso necessário)
+                img_resized = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
 
-        img = cv2.imread(os.path.join(DATA_DIR, dir_, img_path))
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                # Normaliza os valores da imagem para a faixa [0, 1] e adiciona ao dataset
+                img_resized = img_resized / 255.0
+                data.append(img_resized)
+                
+                # Adiciona o rótulo (classe) correspondente
+                labels.append(int(dir_))  # Presumindo que os nomes das pastas são números das classes
 
-        results = hands.process(img_rgb)
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                for i in range(len(hand_landmarks.landmark)):
-                    x = hand_landmarks.landmark[i].x
-                    y = hand_landmarks.landmark[i].y
+# Converte as listas para arrays NumPy
+data = np.array(data)
+labels = np.array(labels)
 
-                    x_.append(x)
-                    y_.append(y)
+# Salva os dados em um arquivo pickle
+os.makedirs('results', exist_ok=True)
+with open('results/data.pickle', 'wb') as f:
+    pickle.dump({'data': data, 'labels': labels}, f)
 
-                for i in range(len(hand_landmarks.landmark)):
-                    x = hand_landmarks.landmark[i].x
-                    y = hand_landmarks.landmark[i].y
-                    data_aux.append(x - min(x_))
-                    data_aux.append(y - min(y_))
-
-            data.append(data_aux)
-            labels.append(dir_)
-
-f = open('results/data.pickle', 'wb')
-pickle.dump({'data': data, 'labels': labels}, f)
-f.close()
+print(f"Dataset criado com {len(data)} exemplos.")
