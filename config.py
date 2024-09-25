@@ -36,7 +36,7 @@ param_grid = {
     "dropout_rate": [0.3, 0.5],
     "activation": ['relu', 'tanh'],
     "optimizer": ['adam', 'sgd'],
-    "l2_reg": [0.001, 0.01],
+    "l2_reg": [0.0001 ,0.001, 0.01],
     "epochs": [50],
     "batch_size": [35, 84, 140]
 }
