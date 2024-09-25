@@ -41,13 +41,6 @@ while True:
                 x_min, y_min = min(x_min, x), min(y_min, y)
                 x_max, y_max = max(x_max, x), max(y_max, y)
 
-            # Expande ligeiramente a região da mão detectada
-            padding = 10  # Reduzido para garantir menos interferência de padding
-            x_min = max(0, x_min - padding)
-            y_min = max(0, y_min - padding)
-            x_max = min(w, x_max + padding)
-            y_max = min(h, y_max + padding)
-
             # Recortar a região da mão
             hand_roi = frame[y_min:y_max, x_min:x_max]
 
