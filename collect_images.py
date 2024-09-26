@@ -3,7 +3,7 @@ import cv2
 from image_capture_utils.video_capture import start_video_capture
 
 DATA_DIR = './data'
-number_of_classes = 21
+number_of_classes = 20
 dataset_size = 50
 IMG_SIZE = 512
 

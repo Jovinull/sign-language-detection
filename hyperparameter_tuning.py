@@ -56,7 +56,7 @@ def create_model(conv_layers, filters, kernel_size, dense_units, dropout_rate, a
     model.add(layers.Dense(dense_units, activation=activation,
                            kernel_regularizer=regularizers.l2(l2_reg)))
     model.add(layers.Dropout(dropout_rate))
-    model.add(layers.Dense(21, activation='softmax'))
+    model.add(layers.Dense(20, activation='softmax'))
 
     # Compilando o modelo
     model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
