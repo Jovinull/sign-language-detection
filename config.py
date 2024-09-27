@@ -4,7 +4,7 @@ IMG_SIZE = 512  # Tamanho padrão das imagens
 
 # Parâmetros de treino
 N_SPLITS = 10  # Número de divisões para a validação cruzada (FOLDS)
-BATCH_SIZE = 35  # Quantidade de amostras processadas antes de atualizar os pesos
+BATCH_SIZE = 40  # Quantidade de amostras processadas antes de atualizar os pesos
 epochs = 50  # Número de épocas
 
 #################################################################################################################################
@@ -12,7 +12,7 @@ epochs = 50  # Número de épocas
 #           cada vez com um subconjunto diferente dos dados de treino, para garantir uma avaliação mais robusta.                #
 # BATCH_SIZE: quantidade de amostras processadas antes de ajustar os pesos do modelo.                                           #
 #             O modelo calcula o erro para o batch e ajusta os pesos com base nisso.                                            #
-#             # Possíveis Candidatos: 35, 50, 70, 84, 100, 140 e 175.                                                #
+#             # Possíveis Candidatos: 40, 125, 250, 500                                               #
 # epochs: número de vezes que o modelo passa por todo o conjunto de dados. Em cada época, o modelo ajusta os pesos              #
 #         várias vezes (dependendo do batch size) até percorrer todo o dataset. Mais épocas permitem que o modelo aprenda mais. #
 #################################################################################################################################
@@ -31,14 +31,14 @@ l2_reg = 0.001  # Regularização L2
 param_grid = {
     "conv_layers": [2, 3, 4],
     "filters": [16, 32, 64],
-    "kernel_size": [3, 5],
+    "kernel_size": [3, 5, 7],
     "dense_units": [128, 256],
     "dropout_rate": [0.3, 0.5],
     "activation": ['relu', 'tanh'],
     "optimizer": ['adam', 'sgd'],
     "l2_reg": [0.0001, 0.001, 0.01],
     "epochs": [epochs],
-    "batch_size": [35, 84, 140],
+    "batch_size": [125, 250, 500],
     "IMG_SIZE": [128, 256, 512]
 }
 

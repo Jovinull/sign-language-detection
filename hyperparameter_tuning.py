@@ -5,6 +5,7 @@ from keras import layers, models, regularizers
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.utils import shuffle
 from scikeras.wrappers import KerasClassifier
+from sklearn.metrics import make_scorer, precision_score, recall_score, f1_score
 import config  # Importar os parâmetros do arquivo config.py
 from utils.resize_image_by_aspect import resize_image  # Função para redimensionar as imagens
 
@@ -94,14 +95,25 @@ param_grid = {
     'model__img_size': config.param_grid['IMG_SIZE']
 }
 
+# Definindo uma função para escolher o método de busca e aplicar as métricas adicionais
 def choose_search_method(search_type=config.search_type, n_iter=config.n_iter):
+    # Definindo os scorers (métricas) personalizados
+    scoring = {
+        'accuracy': 'accuracy',
+        'precision_weighted': make_scorer(precision_score, average='weighted'),
+        'recall_weighted': make_scorer(recall_score, average='weighted'),
+        'f1_weighted': make_scorer(f1_score, average='weighted')
+    }
+    
     if search_type == 'grid':
         print("Usando GridSearchCV...")
-        search = GridSearchCV(estimator=model, param_grid=param_grid, cv=config.N_SPLITS, verbose=2)
+        search = GridSearchCV(estimator=model, param_grid=param_grid, cv=config.N_SPLITS, 
+                              verbose=2, scoring=scoring, refit='f1_weighted')  # Refit com F1 ponderado
     elif search_type == 'random':
         print(f"Usando RandomizedSearchCV com {n_iter} iterações...")
         search = RandomizedSearchCV(estimator=model, param_distributions=param_grid, n_iter=n_iter, 
-                                    cv=config.N_SPLITS, verbose=2, random_state=42)
+                                    cv=config.N_SPLITS, verbose=2, random_state=42, scoring=scoring, 
+                                    refit='f1_weighted')  # Refit com F1 ponderado
     else:
         raise ValueError("search_type deve ser 'grid' ou 'random'.")
     
@@ -116,7 +128,7 @@ data, labels = shuffle(data, labels, random_state=42)
 search_method = choose_search_method()
 search_result = search_method.fit(data, labels)
 
-print(f"Melhor acurácia: {search_result.best_score_ * 100:.2f}%")
+print(f"Melhor F1 ponderado: {search_result.best_score_ * 100:.2f}%")
 print("Melhores parâmetros: ", search_result.best_params_)
 
 # Função para salvar os resultados em um arquivo
@@ -127,11 +139,12 @@ def save_results_to_txt(search_result, filename="results/tuning_results.txt"):
         file.write("Melhores parâmetros:\n")
         file.write(str(search_result.best_params_) + "\n\n")
         
-        file.write(f"Melhor acurácia: {search_result.best_score_ * 100:.2f}%\n\n")
+        file.write(f"Melhor F1 ponderado: {search_result.best_score_ * 100:.2f}%\n\n")
         
         for i, candidate in enumerate(search_result.cv_results_['params']):
             file.write(f"Configuração {i+1}: {candidate}\n")
-            file.write(f"Acurácia média: {search_result.cv_results_['mean_test_score'][i]:.4f}\n")
-            file.write(f"Desvio padrão da acurácia: {search_result.cv_results_['std_test_score'][i]:.4f}\n\n")
+            file.write(f"Acurácia média: {search_result.cv_results_['mean_test_accuracy'][i]:.4f}\n")
+            file.write(f"F1-Score ponderado: {search_result.cv_results_['mean_test_f1_weighted'][i]:.4f}\n")
+            file.write(f"Desvio padrão do F1: {search_result.cv_results_['std_test_f1_weighted'][i]:.4f}\n\n")
 
 save_results_to_txt(search_result)
