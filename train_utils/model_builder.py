@@ -23,7 +23,7 @@ def create_model():
     model.add(layers.Dense(config.dense_units, activation=config.activation,
                            kernel_regularizer=regularizers.l2(config.l2_reg)))
     model.add(layers.Dropout(config.dropout_rate))
-    model.add(layers.Dense(21, activation='softmax'))
+    model.add(layers.Dense(21, activation='softmax'))  # Ajuste o número de unidades de saída conforme necessário
 
     # Compilando o modelo
     model.compile(optimizer=config.optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])

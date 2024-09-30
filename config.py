@@ -1,6 +1,8 @@
+# config.py
+
 # Parâmetros de dados
 DATA_DIR = './data'
-IMG_SIZE = 512  # Tamanho padrão das imagens
+IMG_SIZE = 512  # Tamanho padrão das imagens fixo
 
 # Parâmetros de treino
 N_SPLITS = 10  # Número de divisões para a validação cruzada (FOLDS)
@@ -38,8 +40,8 @@ param_grid = {
     "optimizer": ['adam', 'sgd'],
     "l2_reg": [0.0001, 0.001, 0.01],
     "epochs": [epochs],
-    "batch_size": [125, 250, 500],
-    "IMG_SIZE": [128, 256, 512]
+    "batch_size": [125, 250, 500]
+    # "IMG_SIZE": [128, 256, 512]  # Removido para evitar inconsistências com o HDF5 fixo
 }
 
 # Parâmetros de busca (Grid ou Random)
