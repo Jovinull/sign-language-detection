@@ -6,7 +6,7 @@ IMG_SIZE = 512  # Tamanho padrão das imagens fixo
 
 # Parâmetros de treino
 N_SPLITS = 10  # Número de divisões para a validação cruzada (FOLDS)
-BATCH_SIZE = 40  # Quantidade de amostras processadas antes de atualizar os pesos
+BATCH_SIZE = 125  # Quantidade de amostras processadas antes de atualizar os pesos
 epochs = 50  # Número de épocas
 
 #################################################################################################################################

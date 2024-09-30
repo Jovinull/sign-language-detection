@@ -1,6 +1,6 @@
 import tensorflow as tf
 from sklearn.model_selection import KFold
-from train_utils.data_loader import load_data_hdf5, get_train_test_split
+from train_utils.data_loader import load_data_hdf5, load_data_hdf5_as_dataset
 from train_utils.model_builder import create_model
 import config
 from sklearn.metrics import precision_score, recall_score, f1_score
@@ -16,8 +16,12 @@ def cross_validate_and_train(h5f, labels, n_splits, BATCH_SIZE, epochs):
     for train_index, test_index in kf.split(labels):
         print(f'\n--- Iniciando a fold {fold_no} ---')
 
-        # Obtém os dados de treino e teste para esta fold
-        x_train, y_train, x_test, y_test = get_train_test_split(h5f, labels, train_index, test_index)
+        # Crie datasets para treino e teste
+        x_train = load_data_hdf5_as_dataset(h5f, labels, train_index)
+        x_test = load_data_hdf5_as_dataset(h5f, labels, test_index)
+
+        y_train = labels[train_index]  # Adicione esta linha
+        y_test = labels[test_index]     # E esta linha
 
         # Cria o modelo
         model = create_model()
@@ -25,11 +29,8 @@ def cross_validate_and_train(h5f, labels, n_splits, BATCH_SIZE, epochs):
         print(f'Treinando a fold {fold_no}...')
 
         # Define os datasets utilizando tf.data para otimização
-        train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-        train_dataset = train_dataset.shuffle(buffer_size=1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-
-        test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-        test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+        train_dataset = x_train.shuffle(buffer_size=1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+        test_dataset = x_test.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
         # Treina o modelo
         history = model.fit(
@@ -40,8 +41,12 @@ def cross_validate_and_train(h5f, labels, n_splits, BATCH_SIZE, epochs):
         )
 
         # Faz previsões no conjunto de teste
-        y_pred = model.predict(test_dataset)
-        y_pred_classes = np.argmax(y_pred, axis=1)
+        y_pred = []
+        for x, _ in test_dataset:
+            y_pred_batch = model.predict(x)
+            y_pred.append(np.argmax(y_pred_batch, axis=1))
+
+        y_pred_classes = np.concatenate(y_pred)  # Concatenar previsões de todos os batches
 
         # Calcula precisão, recall e F1-score
         precision = precision_score(y_test, y_pred_classes, average='weighted')
