@@ -6,7 +6,7 @@ from sklearn.metrics import make_scorer, precision_score, recall_score, f1_score
 from scikeras.wrappers import KerasClassifier
 from keras import layers, models, regularizers
 from tensorflow.python.keras.utils.data_utils import Sequence
-import config  # Assegure-se de que o config.py está corretamente configurado
+import config
 
 # Caminho para o arquivo HDF5 criado anteriormente
 HDF5_FILE = 'results/data.h5'
@@ -166,9 +166,20 @@ def main():
     batch_size = config.BATCH_SIZE
     data_generator = HDF5DataGenerator(HDF5_FILE, batch_size)
 
+    # Preparar os dados (X e y) a partir do gerador
+    # Como scikeras suporta o uso de geradores, podemos passar o data_generator diretamente
+    # Porém, para GridSearchCV e RandomizedSearchCV, é necessário fornecer os dados como arrays
+    # Uma alternativa é carregar os dados completamente na memória se possível
+    # Caso contrário, considere usar outras abordagens como Bayesian Optimization
+
+    # Carregar todos os dados em memória (se possível)
+    with h5py.File(HDF5_FILE, 'r') as h5f:
+        X = h5f['data'][:]
+        y = h5f['labels'][:]
+
     # Executar a busca de hiperparâmetros
     print("Iniciando a busca de hiperparâmetros...")
-    search_result = search_method.fit(data_generator)
+    search_result = search_method.fit(X, y)
     print("Busca de hiperparâmetros concluída.")
 
     # Exibir os melhores resultados
